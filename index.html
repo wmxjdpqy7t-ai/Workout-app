@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iron Morning</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <div class="logo">Iron Morning <span>Upper Body</span></div>
+  <div class="header-date" id="headerDate"></div>
+</header>
+
+<div class="summary-bar">
+  <div class="summary-stat">
+    <div class="stat-val" id="statCompleted">0/0</div>
+    <div class="stat-lbl">Exercises</div>
+  </div>
+  <div class="summary-stat">
+    <div class="stat-val" id="statSets">0</div>
+    <div class="stat-lbl">Sets Done</div>
+  </div>
+  <div class="summary-stat">
+    <div class="stat-val" id="statVol">0kg</div>
+    <div class="stat-lbl">Volume</div>
+  </div>
+  <div class="muscle-balance">
+    <div class="balance-label">Balance</div>
+    <div class="balance-bars">
+      <div class="balance-item">
+        <div class="balance-bar-wrap"><div class="balance-fill push" id="balPush" style="height:0%"></div></div>
+        <div class="balance-text">Push</div>
+      </div>
+      <div class="balance-item">
+        <div class="balance-bar-wrap"><div class="balance-fill pull" id="balPull" style="height:0%"></div></div>
+        <div class="balance-text">Pull</div>
+      </div>
+      <div class="balance-item">
+        <div class="balance-bar-wrap"><div class="balance-fill core" id="balCore" style="height:0%"></div></div>
+        <div class="balance-text">Core</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="nav-tabs">
+  <button class="nav-tab active" onclick="showTab('today')">Today</button>
+  <button class="nav-tab" onclick="showTab('history')">History</button>
+  <button class="nav-tab" onclick="showTab('settings')">Settings</button>
+</div>
+
+<!-- TODAY -->
+<div class="section active" id="tab-today">
+  <div class="workout-header">
+    <div>
+      <div class="workout-title" id="workoutTitle">Upper Body A</div>
+      <div class="workout-subtitle" id="workoutSubtitle">Loading...</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="generateWorkout()">New Workout</button>
+      <button class="btn primary" onclick="finishWorkout()">Finish &amp; Save</button>
+    </div>
+  </div>
+  <div id="exerciseList"></div>
+</div>
+
+<!-- HISTORY -->
+<div class="section" id="tab-history">
+  <div id="historyContent">
+    <div class="history-empty">No workouts saved yet.</div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="section" id="tab-settings">
+  <div class="settings-section">
+    <div class="settings-title">Equipment Available</div>
+    <div class="equipment-grid" id="equipGrid"></div>
+  </div>
+  <div class="settings-section">
+    <div class="settings-title">Dumbbell Range</div>
+    <div class="settings-row">
+      <div><div class="settings-label">Minimum (kg)</div></div>
+      <input type="number" id="dbMin" value="4" min="2" max="20" step="2">
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-label">Maximum (kg)</div></div>
+      <input type="number" id="dbMax" value="26" min="10" max="60" step="2">
+    </div>
+  </div>
+  <div class="settings-section">
+    <div class="settings-title">Workout Preferences</div>
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Supersets per session</div>
+        <div class="settings-sub">2-4 recommended for 30 min</div>
+      </div>
+      <input type="number" id="prefSupersets" value="3" min="2" max="4">
+    </div>
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Exercises per session</div>
+        <div class="settings-sub">Spread across supersets (min 2 per superset)</div>
+      </div>
+      <input type="number" id="prefExercises" value="6" min="4" max="10">
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-label">Default sets per exercise</div></div>
+      <input type="number" id="prefSets" value="3" min="2" max="5">
+    </div>
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Rest between superset rounds (sec)</div>
+        <div class="settings-sub">Timer fires after completing all exercises in a round</div>
+      </div>
+      <input type="number" id="prefRest" value="60" min="30" max="180" step="10">
+    </div>
+  </div>
+  <div class="settings-section">
+    <div class="settings-title">Progression</div>
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Auto-suggest weights</div>
+        <div class="settings-sub">Adjusts based on effort rating from last session</div>
+      </div>
+      <select id="prefProgression">
+        <option value="auto">Auto (recommended)</option>
+        <option value="manual">Manual only</option>
+      </select>
+    </div>
+  </div>
+  <div class="settings-section" style="padding-top:8px">
+    <button class="btn primary" onclick="saveSettings()">Save Settings</button>
+  </div>
+</div>
+
+<!-- REST TIMER -->
+<div class="rest-overlay" id="restOverlay">
+  <div class="rest-title">Round Complete</div>
+  <div class="rest-context" id="restContext"></div>
+  <div class="rest-circle">
+    <div class="rest-count" id="restCount">60</div>
+    <div class="rest-label">seconds</div>
+  </div>
+  <div class="rest-skip" onclick="skipRest()">Skip rest</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
