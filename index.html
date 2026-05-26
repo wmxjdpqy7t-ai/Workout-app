@@ -6,7 +6,7 @@
 <title>Iron Morning</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#111;--surface:#1a1a1a;--surface2:#222;--border:#444;--text:#fff;--muted:#ccc;--accent:#f5d080;--green:#50dd80;--amber:#ffcc44;--red:#ff6655;--blue:#88bbff;}
+:root{--bg:#111;--surface:#1a1a1a;--surface2:#222;--border:#444;--text:#fff;--muted:#ccc;--accent:#f5d080;--green:#50dd80;--amber:#ffcc44;--red:#ff6655;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#111;color:#fff;font-family:'Barlow',sans-serif;min-height:100vh;padding-bottom:40px;}
 header{display:flex;align-items:baseline;justify-content:space-between;padding:24px 28px 18px;border-bottom:1px solid #444;background:#111;}
@@ -43,7 +43,7 @@ header{display:flex;align-items:baseline;justify-content:space-between;padding:2
 .sets-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center;}
 .set-item{display:flex;align-items:center;gap:6px;background:#1a1a1a;border:1px solid #333;border-radius:4px;padding:6px 10px;}
 .set-item.done{background:#1a3322;border-color:#50dd80;}
-.set-num{font-size:.7rem;color:#888;letter-spacing:.06em;min-width:18px;}
+.set-num{font-size:.7rem;color:#888;min-width:18px;}
 .set-input{width:48px;background:transparent;border:none;border-bottom:1px solid #555;color:#fff;font-size:.9rem;text-align:center;padding:2px 0;font-family:'Barlow',sans-serif;}
 .set-input:focus{outline:none;border-bottom-color:#f5d080;}
 .set-x{color:#555;font-size:.8rem;}
@@ -86,9 +86,9 @@ header{display:flex;align-items:baseline;justify-content:space-between;padding:2
   <div class="summary-stat"><div class="stat-val" id="statVol">0kg</div><div class="stat-lbl">Volume</div></div>
 </div>
 <div class="nav-tabs">
-  <button class="nav-tab active" onclick="showTab('today')">Today</button>
-  <button class="nav-tab" onclick="showTab('history')">History</button>
-  <button class="nav-tab" onclick="showTab('settings')">Settings</button>
+  <button class="nav-tab active" onclick="showTab(this,'today')">Today</button>
+  <button class="nav-tab" onclick="showTab(this,'history')">History</button>
+  <button class="nav-tab" onclick="showTab(this,'settings')">Settings</button>
 </div>
 <div class="section active" id="tab-today">
   <div class="workout-header">
@@ -120,7 +120,7 @@ header{display:flex;align-items:baseline;justify-content:space-between;padding:2
     <div class="settings-row"><div><div class="settings-label">Dumbbell Min (kg)</div></div><input type="number" id="dbMin" value="4" min="2" max="20" step="2" onchange="saveSettings()"></div>
     <div class="settings-row"><div><div class="settings-label">Dumbbell Max (kg)</div></div><input type="number" id="dbMax" value="26" min="10" max="60" step="2" onchange="saveSettings()"></div>
   </div>
-  <button class="btn" onclick="generateWorkout();showTab('today')">Generate New Workout</button>
+  <button class="btn" onclick="generateWorkout();showTab(this,'today')">Generate New Workout</button>
 </div>
 <div id="timerOverlay" style="display:none" class="timer-overlay">
   <div class="timer-label">Rest Timer</div>
@@ -128,147 +128,207 @@ header{display:flex;align-items:baseline;justify-content:space-between;padding:2
   <div class="timer-dismiss" onclick="dismissTimer()">Dismiss</div>
 </div>
 <script>
-const EXERCISES=[
-{id:'db_chest_press_flat',name:'Dumbbell Chest Press',type:'push',muscle:'Chest',equip:['dumbbells'],notes:'Elbows at 45 deg. Control the descent.'},
-{id:'db_chest_press_incline',name:'Incline Chest Press',type:'push',muscle:'Upper Chest',equip:['dumbbells','stability_ball'],notes:'Stability ball as bench, 30-45 deg incline.'},
-{id:'db_fly',name:'Dumbbell Fly',type:'push',muscle:'Chest',equip:['dumbbells','stability_ball'],notes:'Slight bend in elbows. Stretch at the bottom.'},
-{id:'db_shoulder_press',name:'Shoulder Press',type:'push',muscle:'Shoulders',equip:['dumbbells'],notes:'Drive through full range. No lower back arch.'},
-{id:'db_lateral_raise',name:'Lateral Raise',type:'push',muscle:'Lateral Delt',equip:['dumbbells'],notes:'Light weight, controlled. Slight elbow bend.'},
-{id:'db_arnold_press',name:'Arnold Press',type:'push',muscle:'Shoulders',equip:['dumbbells'],notes:'Rotate palms outward as you press up.'},
-{id:'db_skull_crusher',name:'Skull Crusher',type:'push',muscle:'Triceps',equip:['dumbbells'],notes:'Lower to forehead level slowly.'},
-{id:'db_overhead_tricep',name:'Overhead Tricep Ext',type:'push',muscle:'Triceps',equip:['dumbbells'],notes:'Both hands on one DB. Keep upper arms fixed.'},
-{id:'db_kickback',name:'Tricep Kickback',type:'push',muscle:'Triceps',equip:['dumbbells'],notes:'Hinge at hips. Full extension at top.'},
-{id:'diamond_pushup',name:'Diamond Push-Up',type:'push',muscle:'Triceps',equip:[],notes:'Hands in diamond. Elbows track back.'},
-{id:'db_bent_row',name:'Bent-Over Row',type:'pull',muscle:'Back',equip:['dumbbells'],notes:'Hinge at hips, neutral spine. Drive elbows back.'},
-{id:'db_single_row',name:'Single-Arm Row',type:'pull',muscle:'Back',equip:['dumbbells'],notes:'Support on knee. Full range of motion.'},
-{id:'db_renegade_row',name:'Renegade Row',type:'pull',muscle:'Back/Core',equip:['dumbbells'],notes:'Plank position. Row one arm at a time.'},
-{id:'db_curl',name:'Dumbbell Curl',type:'pull',muscle:'Biceps',equip:['dumbbells'],notes:'Supinate at top. Full extension at bottom.'},
-{id:'db_hammer_curl',name:'Hammer Curl',type:'pull',muscle:'Biceps',equip:['dumbbells'],notes:'Neutral grip throughout. Controlled tempo.'},
-{id:'db_concentration_curl',name:'Concentration Curl',type:'pull',muscle:'Biceps',equip:['dumbbells'],notes:'Elbow braced on inner thigh. Full squeeze at top.'},
-{id:'db_reverse_fly',name:'Reverse Fly',type:'pull',muscle:'Rear Delt',equip:['dumbbells'],notes:'Hinge forward 45 deg. Raise like wings.'},
-{id:'db_shrug',name:'Dumbbell Shrug',type:'pull',muscle:'Traps',equip:['dumbbells'],notes:'Straight up and down. Hold 1 sec at top.'},
-{id:'ball_crunch',name:'Ball Crunch',type:'core',muscle:'Core',equip:['stability_ball'],notes:'Lower back on ball. Full range of motion.'},
-{id:'db_woodchop',name:'DB Woodchop',type:'core',muscle:'Core/Shoulders',equip:['dumbbells'],notes:'Rotate from shoulder to opposite hip.'},
-{id:'bird_dog',name:'Bird Dog',type:'core',muscle:'Core/Back',equip:[],notes:'Opposite arm and leg. Hold 2 sec. Stay level.'},
-{id:'ball_plank',name:'Stability Ball Plank',type:'core',muscle:'Core',equip:['stability_ball'],notes:'Forearms on ball. Roll forward for extra challenge.'},
-{id:'plank',name:'Plank',type:'core',muscle:'Core',equip:[],notes:'Keep hips level. Breathe steady.'},
+var EXERCISES=[
+{id:"db_chest_press_flat",name:"Dumbbell Chest Press",type:"push",muscle:"Chest",equip:["dumbbells"],notes:"Elbows at 45 deg. Control the descent."},
+{id:"db_chest_press_incline",name:"Incline Chest Press",type:"push",muscle:"Upper Chest",equip:["dumbbells","stability_ball"],notes:"Stability ball as bench, 30-45 deg incline."},
+{id:"db_fly",name:"Dumbbell Fly",type:"push",muscle:"Chest",equip:["dumbbells","stability_ball"],notes:"Slight bend in elbows. Stretch at the bottom."},
+{id:"db_shoulder_press",name:"Shoulder Press",type:"push",muscle:"Shoulders",equip:["dumbbells"],notes:"Drive through full range. No lower back arch."},
+{id:"db_lateral_raise",name:"Lateral Raise",type:"push",muscle:"Lateral Delt",equip:["dumbbells"],notes:"Light weight, controlled. Slight elbow bend."},
+{id:"db_arnold_press",name:"Arnold Press",type:"push",muscle:"Shoulders",equip:["dumbbells"],notes:"Rotate palms outward as you press up."},
+{id:"db_skull_crusher",name:"Skull Crusher",type:"push",muscle:"Triceps",equip:["dumbbells"],notes:"Lower to forehead level slowly."},
+{id:"db_overhead_tricep",name:"Overhead Tricep Ext",type:"push",muscle:"Triceps",equip:["dumbbells"],notes:"Both hands on one DB. Keep upper arms fixed."},
+{id:"db_kickback",name:"Tricep Kickback",type:"push",muscle:"Triceps",equip:["dumbbells"],notes:"Hinge at hips. Full extension at top."},
+{id:"diamond_pushup",name:"Diamond Push-Up",type:"push",muscle:"Triceps",equip:[],notes:"Hands in diamond. Elbows track back."},
+{id:"db_bent_row",name:"Bent-Over Row",type:"pull",muscle:"Back",equip:["dumbbells"],notes:"Hinge at hips, neutral spine. Drive elbows back."},
+{id:"db_single_row",name:"Single-Arm Row",type:"pull",muscle:"Back",equip:["dumbbells"],notes:"Support on knee. Full range of motion."},
+{id:"db_renegade_row",name:"Renegade Row",type:"pull",muscle:"Back/Core",equip:["dumbbells"],notes:"Plank position. Row one arm at a time."},
+{id:"db_curl",name:"Dumbbell Curl",type:"pull",muscle:"Biceps",equip:["dumbbells"],notes:"Supinate at top. Full extension at bottom."},
+{id:"db_hammer_curl",name:"Hammer Curl",type:"pull",muscle:"Biceps",equip:["dumbbells"],notes:"Neutral grip throughout. Controlled tempo."},
+{id:"db_concentration_curl",name:"Concentration Curl",type:"pull",muscle:"Biceps",equip:["dumbbells"],notes:"Elbow braced on inner thigh. Full squeeze at top."},
+{id:"db_reverse_fly",name:"Reverse Fly",type:"pull",muscle:"Rear Delt",equip:["dumbbells"],notes:"Hinge forward 45 deg. Raise like wings."},
+{id:"db_shrug",name:"Dumbbell Shrug",type:"pull",muscle:"Traps",equip:["dumbbells"],notes:"Straight up and down. Hold 1 sec at top."},
+{id:"ball_crunch",name:"Ball Crunch",type:"core",muscle:"Core",equip:["stability_ball"],notes:"Lower back on ball. Full range of motion."},
+{id:"db_woodchop",name:"DB Woodchop",type:"core",muscle:"Core/Shoulders",equip:["dumbbells"],notes:"Rotate from shoulder to opposite hip."},
+{id:"bird_dog",name:"Bird Dog",type:"core",muscle:"Core/Back",equip:[],notes:"Opposite arm and leg. Hold 2 sec. Stay level."},
+{id:"plank",name:"Plank",type:"core",muscle:"Core",equip:[],notes:"Keep hips level. Breathe steady."},
+{id:"ball_plank",name:"Ball Plank",type:"core",muscle:"Core",equip:["stability_ball"],notes:"Forearms on ball. Roll forward for extra challenge."}
 ];
 
-const SS_COLORS=['#8cb4f5','#f595bb','#6ddba8','#f0cc7a'];
-const SS_NAMES=['Superset A','Superset B','Superset C','Superset D'];
+var SS_COLORS=["#8cb4f5","#f595bb","#6ddba8","#f0cc7a"];
+var SS_NAMES=["Superset A","Superset B","Superset C","Superset D"];
 
-let state={
-  settings:{equip:['dumbbells','stability_ball','bands'],dbMin:4,dbMax:26,prefExercises:6,prefSets:3,prefRest:60,prefSupersets:3},
+var state={
+  settings:{equip:["dumbbells","stability_ball","bands"],dbMin:4,dbMax:26,prefExercises:6,prefSets:3,prefRest:60,prefSupersets:3},
   currentWorkout:null,history:[],workoutCount:0
 };
 
-try{const s=localStorage.getItem('ironmorning_v2');if(s)state=Object.assign({},state,JSON.parse(s));}catch(e){}
+try{var s=localStorage.getItem("ironmorning_v3");if(s)state=Object.assign({},state,JSON.parse(s));}catch(e){}
 
-function save(){try{localStorage.setItem('ironmorning_v2',JSON.stringify(state));}catch(e){}}
+function save(){try{localStorage.setItem("ironmorning_v3",JSON.stringify(state));}catch(e){}}
 
-function showTab(id){
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('tab-'+id).classList.add('active');
-  event.target.classList.add('active');
-  if(id==='history')renderHistory();
-  if(id==='settings')renderSettings();
+function showTab(el,id){
+  document.querySelectorAll(".section").forEach(function(s){s.classList.remove("active");});
+  document.querySelectorAll(".nav-tab").forEach(function(t){t.classList.remove("active");});
+  document.getElementById("tab-"+id).classList.add("active");
+  if(el && el.classList)el.classList.add("active");
+  if(id==="history")renderHistory();
+  if(id==="settings")renderSettings();
 }
 
 function saveSettings(){
-  state.settings.dbMin=+document.getElementById('dbMin').value||4;
-  state.settings.dbMax=+document.getElementById('dbMax').value||26;
-  state.settings.prefExercises=+document.getElementById('prefExercises').value||6;
-  state.settings.prefSets=+document.getElementById('prefSets').value||3;
-  state.settings.prefRest=+document.getElementById('prefRest').value||60;
-  state.settings.prefSupersets=+document.getElementById('prefSupersets').value||3;
+  state.settings.dbMin=+document.getElementById("dbMin").value||4;
+  state.settings.dbMax=+document.getElementById("dbMax").value||26;
+  state.settings.prefExercises=+document.getElementById("prefExercises").value||6;
+  state.settings.prefSets=+document.getElementById("prefSets").value||3;
+  state.settings.prefRest=+document.getElementById("prefRest").value||60;
+  state.settings.prefSupersets=+document.getElementById("prefSupersets").value||3;
   save();
 }
 
 function renderSettings(){
-  document.getElementById('dbMin').value=state.settings.dbMin;
-  document.getElementById('dbMax').value=state.settings.dbMax;
-  document.getElementById('prefExercises').value=state.settings.prefExercises;
-  document.getElementById('prefSets').value=state.settings.prefSets;
-  document.getElementById('prefRest').value=state.settings.prefRest;
-  document.getElementById('prefSupersets').value=state.settings.prefSupersets;
-  const grid=document.getElementById('equipGrid');
-  grid.innerHTML='';
-  ['dumbbells','stability_ball','bands'].forEach(e=>{
-    const chip=document.createElement('div');
-    chip.className='equip-chip'+(state.settings.equip.includes(e)?' active':'');
-    chip.textContent=e.replace(/_/g,' ');
-    chip.onclick=()=>{
-      if(state.settings.equip.includes(e))state.settings.equip=state.settings.equip.filter(x=>x!==e);
-      else state.settings.equip.push(e);
-      save();renderSettings();
-    };
+  document.getElementById("dbMin").value=state.settings.dbMin;
+  document.getElementById("dbMax").value=state.settings.dbMax;
+  document.getElementById("prefExercises").value=state.settings.prefExercises;
+  document.getElementById("prefSets").value=state.settings.prefSets;
+  document.getElementById("prefRest").value=state.settings.prefRest;
+  document.getElementById("prefSupersets").value=state.settings.prefSupersets;
+  var grid=document.getElementById("equipGrid");
+  grid.innerHTML="";
+  ["dumbbells","stability_ball","bands"].forEach(function(e){
+    var chip=document.createElement("div");
+    chip.className="equip-chip"+(state.settings.equip.indexOf(e)>=0?" active":"");
+    chip.textContent=e.replace(/_/g," ");
+    chip.setAttribute("data-equip",e);
+    chip.onclick=function(){toggleEquip(e);};
     grid.appendChild(chip);
   });
 }
 
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function toggleEquip(e){
+  var idx=state.settings.equip.indexOf(e);
+  if(idx>=0)state.settings.equip.splice(idx,1);
+  else state.settings.equip.push(e);
+  save();renderSettings();
+}
+
+function shuffle(a){
+  for(var i=a.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    var tmp=a[i];a[i]=a[j];a[j]=tmp;
+  }
+  return a;
+}
 
 function getLastWeight(id){
-  for(let i=state.history.length-1;i>=0;i--){
-    const ex=state.history[i].exercises&&state.history[i].exercises.find(e=>e.id===id);
-    if(ex&&ex.sets){const done=ex.sets.filter(s=>s.done);if(done.length)return done[done.length-1].weight||'';}
+  for(var i=state.history.length-1;i>=0;i--){
+    var ex=null;
+    for(var j=0;j<state.history[i].exercises.length;j++){
+      if(state.history[i].exercises[j].id===id){ex=state.history[i].exercises[j];break;}
+    }
+    if(ex&&ex.sets){
+      var done=ex.sets.filter(function(s){return s.done;});
+      if(done.length)return done[done.length-1].weight||"";
+    }
   }
-  const def={db_chest_press_flat:20,db_chest_press_incline:16,db_fly:12,db_shoulder_press:16,db_lateral_raise:8,db_arnold_press:14,db_skull_crusher:10,db_overhead_tricep:14,db_kickback:10,db_bent_row:20,db_single_row:22,db_renegade_row:14,db_curl:14,db_hammer_curl:14,db_concentration_curl:12,db_reverse_fly:8,db_shrug:24,db_woodchop:8};
-  return def[id]||'';
+  var def={db_chest_press_flat:20,db_chest_press_incline:16,db_fly:12,db_shoulder_press:16,db_lateral_raise:8,db_arnold_press:14,db_skull_crusher:10,db_overhead_tricep:14,db_kickback:10,db_bent_row:20,db_single_row:22,db_renegade_row:14,db_curl:14,db_hammer_curl:14,db_concentration_curl:12,db_reverse_fly:8,db_shrug:24,db_woodchop:8};
+  return def[id]||"";
 }
 
 function getLastReps(id){
-  for(let i=state.history.length-1;i>=0;i--){
-    const ex=state.history[i].exercises&&state.history[i].exercises.find(e=>e.id===id);
-    if(ex&&ex.sets){const done=ex.sets.filter(s=>s.done);if(done.length)return done[done.length-1].reps||10;}
+  for(var i=state.history.length-1;i>=0;i--){
+    var ex=null;
+    for(var j=0;j<state.history[i].exercises.length;j++){
+      if(state.history[i].exercises[j].id===id){ex=state.history[i].exercises[j];break;}
+    }
+    if(ex&&ex.sets){
+      var done=ex.sets.filter(function(s){return s.done;});
+      if(done.length)return done[done.length-1].reps||10;
+    }
   }
   return 10;
 }
 
 function generateWorkout(){
-  const avail=EXERCISES.filter(e=>e.equip.length===0||e.equip.some(eq=>state.settings.equip.includes(eq)));
-  const push=shuffle(avail.filter(e=>e.type==='push'));
-  const pull=shuffle(avail.filter(e=>e.type==='pull'));
-  const core=shuffle(avail.filter(e=>e.type==='core'));
-  const nSS=state.settings.prefSupersets;
-  const nEx=state.settings.prefExercises;
-  const perSS=Math.max(2,Math.ceil(nEx/nSS));
-  const combined=[...push,...pull,...core];
-  const supersets=[];
-  for(let i=0;i<nSS;i++){
-    const exList=combined.splice(0,perSS).filter(Boolean);
+  var avail=EXERCISES.filter(function(e){return e.equip.length===0||e.equip.some(function(eq){return state.settings.equip.indexOf(eq)>=0;});});
+  var push=shuffle(avail.filter(function(e){return e.type==="push";}));
+  var pull=shuffle(avail.filter(function(e){return e.type==="pull";}));
+  var core=shuffle(avail.filter(function(e){return e.type==="core";}));
+  var nSS=state.settings.prefSupersets;
+  var nEx=state.settings.prefExercises;
+  var perSS=Math.max(2,Math.ceil(nEx/nSS));
+  var combined=push.concat(pull).concat(core);
+  var supersets=[];
+  for(var i=0;i<nSS;i++){
+    var exList=combined.splice(0,perSS).filter(function(x){return x;});
     supersets.push({
       color:SS_COLORS[i%4],name:SS_NAMES[i],
-      exercises:exList.map(ex=>({
-        id:ex.id,name:ex.name,muscle:ex.muscle,notes:ex.notes,effort:'moderate',
-        sets:Array.from({length:state.settings.prefSets},(_,j)=>({num:j+1,weight:getLastWeight(ex.id),reps:getLastReps(ex.id),done:false}))
-      }))
+      exercises:exList.map(function(ex){
+        return {
+          id:ex.id,name:ex.name,muscle:ex.muscle,notes:ex.notes,effort:"moderate",
+          sets:(function(){
+            var arr=[];
+            for(var k=0;k<state.settings.prefSets;k++){
+              arr.push({num:k+1,weight:getLastWeight(ex.id),reps:getLastReps(ex.id),done:false});
+            }
+            return arr;
+          })()
+        };
+      })
     });
   }
-  state.currentWorkout={supersets,startTime:Date.now()};
+  state.currentWorkout={supersets:supersets,startTime:Date.now()};
   save();
   renderWorkout();
 }
 
 function renderWorkout(){
   if(!state.currentWorkout){generateWorkout();return;}
-  const list=document.getElementById('exerciseList');
-  list.innerHTML='';
-  state.currentWorkout.supersets.forEach((ss,si)=>{
-    const block=document.createElement('div');
-    block.className='superset-block';
-    block.innerHTML='<div class="superset-header"><div class="ss-dot" style="background:'+ss.color+'"></div><div class="ss-label">'+ss.name+'</div></div>';
-    ss.exercises.forEach((ex,ei)=>{
-      const card=document.createElement('div');
-      card.className='exercise-card';
-      card.innerHTML='<div class="ex-name">'+ex.name+'</div><div class="ex-muscle">'+ex.muscle+'</div><div class="ex-notes">'+ex.notes+'</div><div class="sets-row" id="sets-'+si+'-'+ei+'"></div><div class="effort-row"><span class="effort-lbl">Effort:</span><button class="effort-btn'+(ex.effort==='easy'?' active-easy':'')+'" onclick="setEffort('+si+','+ei+','easy')">Easy</button><button class="effort-btn'+(ex.effort==='moderate'?' active-moderate':'')+'" onclick="setEffort('+si+','+ei+','moderate')">Moderate</button><button class="effort-btn'+(ex.effort==='hard'?' active-hard':'')+'" onclick="setEffort('+si+','+ei+','hard')">Hard</button></div>';
+  var list=document.getElementById("exerciseList");
+  list.innerHTML="";
+  state.currentWorkout.supersets.forEach(function(ss,si){
+    var block=document.createElement("div");
+    block.className="superset-block";
+    var hdr=document.createElement("div");
+    hdr.className="superset-header";
+    hdr.innerHTML='<div class="ss-dot" style="background:'+ss.color+'"></div><div class="ss-label">'+ss.name+"</div>";
+    block.appendChild(hdr);
+    ss.exercises.forEach(function(ex,ei){
+      var card=document.createElement("div");
+      card.className="exercise-card";
+      var setsId="sets-"+si+"-"+ei;
+      card.innerHTML='<div class="ex-name">'+ex.name+'</div><div class="ex-muscle">'+ex.muscle+'</div><div class="ex-notes">'+ex.notes+'</div><div class="sets-row" id="'+setsId+'"></div><div class="effort-row"><span class="effort-lbl">Effort:</span></div>';
       block.appendChild(card);
-      ex.sets.forEach((set,ki)=>{
-        const row=document.getElementById('sets-'+si+'-'+ei);
-        const item=document.createElement('div');
-        item.className='set-item'+(set.done?' done':'');
-        item.innerHTML='<span class="set-num">S'+(ki+1)+'</span><input class="set-input" type="number" value="'+(set.weight||'')+'" placeholder="kg" onchange="updateSet('+si+','+ei+','+ki+','weight',this.value)"><span class="set-x">×</span><input class="set-input" type="number" value="'+(set.reps||'')+'" placeholder="reps" onchange="updateSet('+si+','+ei+','+ki+','reps',this.value)"><div class="set-check'+(set.done?' done':'')+'" onclick="toggleSet('+si+','+ei+','+ki+')">'+(set.done?'✓':'')+'</div>';
+      var effortRow=card.querySelector(".effort-row");
+      ["easy","moderate","hard"].forEach(function(level){
+        var btn=document.createElement("button");
+        btn.className="effort-btn"+(ex.effort===level?" active-"+level:"");
+        btn.textContent=level.charAt(0).toUpperCase()+level.slice(1);
+        btn.setAttribute("data-si",si);
+        btn.setAttribute("data-ei",ei);
+        btn.setAttribute("data-level",level);
+        btn.onclick=function(){setEffort(+this.getAttribute("data-si"),+this.getAttribute("data-ei"),this.getAttribute("data-level"));};
+        effortRow.appendChild(btn);
+      });
+      var row=document.getElementById(setsId);
+      ex.sets.forEach(function(set,ki){
+        var item=document.createElement("div");
+        item.className="set-item"+(set.done?" done":"");
+        item.innerHTML='<span class="set-num">S'+(ki+1)+'</span>';
+        var wInput=document.createElement("input");
+        wInput.className="set-input";wInput.type="number";wInput.value=set.weight||"";wInput.placeholder="kg";
+        wInput.setAttribute("data-si",si);wInput.setAttribute("data-ei",ei);wInput.setAttribute("data-ki",ki);wInput.setAttribute("data-field","weight");
+        wInput.onchange=function(){updateSet(+this.getAttribute("data-si"),+this.getAttribute("data-ei"),+this.getAttribute("data-ki"),"weight",this.value);};
+        var xSpan=document.createElement("span");xSpan.className="set-x";xSpan.textContent="x";
+        var rInput=document.createElement("input");
+        rInput.className="set-input";rInput.type="number";rInput.value=set.reps||"";rInput.placeholder="reps";
+        rInput.setAttribute("data-si",si);rInput.setAttribute("data-ei",ei);rInput.setAttribute("data-ki",ki);rInput.setAttribute("data-field","reps");
+        rInput.onchange=function(){updateSet(+this.getAttribute("data-si"),+this.getAttribute("data-ei"),+this.getAttribute("data-ki"),"reps",this.value);};
+        var check=document.createElement("div");
+        check.className="set-check"+(set.done?" done":"");
+        check.textContent=set.done?"v":"";
+        check.setAttribute("data-si",si);check.setAttribute("data-ei",ei);check.setAttribute("data-ki",ki);
+        check.onclick=function(){toggleSet(+this.getAttribute("data-si"),+this.getAttribute("data-ei"),+this.getAttribute("data-ki"));};
+        item.appendChild(wInput);item.appendChild(xSpan);item.appendChild(rInput);item.appendChild(check);
         row.appendChild(item);
       });
     });
@@ -278,87 +338,92 @@ function renderWorkout(){
 }
 
 function updateSet(si,ei,ki,field,val){
-  state.currentWorkout.supersets[si].exercises[ei].sets[ki][field]=field==='weight'?(parseFloat(val)||0):(parseInt(val)||0);
+  state.currentWorkout.supersets[si].exercises[ei].sets[ki][field]=field==="weight"?(parseFloat(val)||0):(parseInt(val)||0);
   save();
 }
 
 function toggleSet(si,ei,ki){
-  const set=state.currentWorkout.supersets[si].exercises[ei].sets[ki];
+  var set=state.currentWorkout.supersets[si].exercises[ei].sets[ki];
   set.done=!set.done;
   save();
-  const ssAllDone=state.currentWorkout.supersets[si].exercises.every(ex=>ex.sets.every(s=>s.done));
+  var ssAllDone=state.currentWorkout.supersets[si].exercises.every(function(ex){return ex.sets.every(function(s){return s.done;});});
   if(ssAllDone)startTimer();
   renderWorkout();
 }
 
-function setEffort(si,ei,val){
-  state.currentWorkout.supersets[si].exercises[ei].effort=val;
+function setEffort(si,ei,level){
+  state.currentWorkout.supersets[si].exercises[ei].effort=level;
   save();renderWorkout();
 }
 
-let timerInterval=null;
+var timerInterval=null;
 function startTimer(){
   clearInterval(timerInterval);
-  const overlay=document.getElementById('timerOverlay');
-  overlay.style.display='block';
-  let t=state.settings.prefRest;
-  document.getElementById('timerDisplay').textContent=t;
-  timerInterval=setInterval(()=>{
+  var overlay=document.getElementById("timerOverlay");
+  overlay.style.display="block";
+  var t=state.settings.prefRest;
+  document.getElementById("timerDisplay").textContent=t;
+  timerInterval=setInterval(function(){
     t--;
-    document.getElementById('timerDisplay').textContent=t;
-    if(t<=0){clearInterval(timerInterval);overlay.style.display='none';}
+    document.getElementById("timerDisplay").textContent=t;
+    if(t<=0){clearInterval(timerInterval);overlay.style.display="none";}
   },1000);
 }
 
-function dismissTimer(){clearInterval(timerInterval);document.getElementById('timerOverlay').style.display='none';}
+function dismissTimer(){clearInterval(timerInterval);document.getElementById("timerOverlay").style.display="none";}
 
 function updateStats(){
   if(!state.currentWorkout)return;
-  let totalEx=0,doneEx=0,totalSets=0,vol=0;
-  state.currentWorkout.supersets.forEach(ss=>{
-    ss.exercises.forEach(ex=>{
+  var totalEx=0,doneEx=0,totalSets=0,vol=0;
+  state.currentWorkout.supersets.forEach(function(ss){
+    ss.exercises.forEach(function(ex){
       totalEx++;
-      const doneSets=ex.sets.filter(s=>s.done);
+      var doneSets=ex.sets.filter(function(s){return s.done;});
       if(doneSets.length===ex.sets.length&&ex.sets.length>0)doneEx++;
       totalSets+=doneSets.length;
-      doneSets.forEach(s=>{vol+=(parseFloat(s.weight)||0)*(parseInt(s.reps)||0);});
+      doneSets.forEach(function(s){vol+=(parseFloat(s.weight)||0)*(parseInt(s.reps)||0);});
     });
   });
-  document.getElementById('statCompleted').textContent=doneEx+'/'+totalEx;
-  document.getElementById('statSets').textContent=totalSets;
-  document.getElementById('statVol').textContent=Math.round(vol)+'kg';
+  document.getElementById("statCompleted").textContent=doneEx+"/"+totalEx;
+  document.getElementById("statSets").textContent=totalSets;
+  document.getElementById("statVol").textContent=Math.round(vol)+"kg";
 }
 
 function finishWorkout(){
   if(!state.currentWorkout)return;
-  const exList=[];
-  state.currentWorkout.supersets.forEach(ss=>{ss.exercises.forEach(ex=>exList.push(ex));});
-  const doneSets=exList.reduce((a,e)=>a+e.sets.filter(s=>s.done).length,0);
-  if(doneSets===0){alert('Complete at least one set before saving!');return;}
-  state.history.push({date:new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}),exercises:exList,timestamp:Date.now()});
+  var exList=[];
+  state.currentWorkout.supersets.forEach(function(ss){ss.exercises.forEach(function(ex){exList.push(ex);});});
+  var doneSets=exList.reduce(function(a,e){return a+e.sets.filter(function(s){return s.done;}).length;},0);
+  if(doneSets===0){alert("Complete at least one set before saving!");return;}
+  state.history.push({
+    date:new Date().toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short",year:"numeric"}),
+    exercises:exList,timestamp:Date.now()
+  });
   state.workoutCount++;
   save();
-  alert('Workout saved! Great work!');
+  alert("Workout saved! Great work!");
   generateWorkout();
 }
 
 function renderHistory(){
-  const el=document.getElementById('historyContent');
+  var el=document.getElementById("historyContent");
   if(!state.history.length){el.innerHTML='<div class="history-empty">No workouts saved yet.</div>';return;}
-  el.innerHTML='';
-  [...state.history].reverse().forEach(w=>{
-    const card=document.createElement('div');
-    card.className='history-card';
-    const doneSets=w.exercises.reduce((a,e)=>a+(e.sets?e.sets.filter(s=>s.done).length:0),0);
-    const vol=w.exercises.reduce((a,e)=>a+(e.sets?e.sets.filter(s=>s.done).reduce((b,s)=>b+(parseFloat(s.weight)||0)*(parseInt(s.reps)||0),0):0),0);
-    card.innerHTML='<div class="history-date">'+w.date+'</div><div class="history-meta">'+doneSets+' sets &nbsp;·&nbsp; '+Math.round(vol)+'kg volume</div>'+
-    w.exercises.filter(e=>e.sets&&e.sets.some(s=>s.done)).map(e=>'<div class="history-ex">'+e.name+' — '+e.sets.filter(s=>s.done).map(s=>(s.weight||'BW')+'×'+s.reps).join(', ')+'</div>').join('');
+  el.innerHTML="";
+  var reversed=state.history.slice().reverse();
+  reversed.forEach(function(w){
+    var card=document.createElement("div");
+    card.className="history-card";
+    var doneSets=w.exercises.reduce(function(a,e){return a+(e.sets?e.sets.filter(function(s){return s.done;}).length:0);},0);
+    var vol=w.exercises.reduce(function(a,e){return a+(e.sets?e.sets.filter(function(s){return s.done;}).reduce(function(b,s){return b+(parseFloat(s.weight)||0)*(parseInt(s.reps)||0);},0):0);},0);
+    var exHtml=w.exercises.filter(function(e){return e.sets&&e.sets.some(function(s){return s.done;});}).map(function(e){
+      return '<div class="history-ex">'+e.name+" - "+e.sets.filter(function(s){return s.done;}).map(function(s){return (s.weight||"BW")+"x"+s.reps;}).join(", ")+"</div>";
+    }).join("");
+    card.innerHTML='<div class="history-date">'+w.date+'</div><div class="history-meta">'+doneSets+" sets · "+Math.round(vol)+"kg</div>"+exHtml;
     el.appendChild(card);
   });
 }
 
-// Init
-document.getElementById('headerDate').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+document.getElementById("headerDate").textContent=new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
 renderSettings();
 if(state.currentWorkout)renderWorkout();else generateWorkout();
 </script>
